@@ -23,8 +23,8 @@ proxy_GET <- function(url, proxy_ip, proxy_port, timeout = 3) {
 find_good_proxies <- function(proxies, test = "https://httpbin.org/get", ...) {
     good_proxies <- c()
     for (p in seq_len(nrow(proxies))) {
-        ip <- proxies[p, 2]
-        port <- proxies[p, 3]
+        ip <- proxies[p, ]$ip
+        port <- as.numeric(proxies[p, ]$port)
         tryCatch({
             proxy_GET(test, ip, port, ...)
             message("proxy passed timeout test")
@@ -36,7 +36,7 @@ find_good_proxies <- function(proxies, test = "https://httpbin.org/get", ...) {
     return(proxies[good_proxies, ])
 }
 
-proxies <- read.csv("./proxies.csv")
+proxies <- download_proxies() 
 filename <- sprintf("good_proxies_%s.csv", Sys.Date())
 good <- find_good_proxies(proxies)
-write.csv(good, filename)
+#write.csv(good[2:5], filename)
