@@ -1,6 +1,11 @@
 library(httr)
+library(rvest)
 
-download_proxies <- function(url = "https://spys.me/proxy.txt") {
+get_freeproxylist_proxies <- function() {
+    url <- "https://www.freeproxylists.net/"
+}
+
+get_spys_proxies <- function(url = "https://spys.me/proxy.txt") {
     proxies <- readLines(url)[7:406]
     split <- strsplit(proxies, ":| ")
     df <- as.data.frame(do.call(rbind, split))
@@ -8,13 +13,12 @@ download_proxies <- function(url = "https://spys.me/proxy.txt") {
     return(df)
 }
 
-proxy_GET <- function(url, proxy_ip, proxy_port, timeout = 3) {
-    page <- httr::content(
-        httr::GET(
-            url,
-            httr::use_proxy(proxy_ip, proxy_port),
-            timeout(timeout)
-        )
+proxy_GET <- function(url, proxy_ip, proxy_port, timeout = 3, ...) {
+    page <- httr::GET(
+                url,
+                httr::use_proxy(proxy_ip, proxy_port),
+                timeout(timeout),
+                ...
     )
     return(page)
 }
@@ -36,7 +40,28 @@ find_good_proxies <- function(proxies, test = "https://httpbin.org/get", ...) {
     return(proxies[good_proxies, ])
 }
 
-proxies <- download_proxies() 
-filename <- sprintf("good_proxies_%s.csv", Sys.Date())
-good <- find_good_proxies(proxies)
-#write.csv(good[2:5], filename)
+rotate_proxies <- function(proxies, urls, callback, ...) {
+    for (p in seq_len(nrow(proxies))) { # loop through proxies
+        ip <- proxies[p, ]$ip
+        port <- as.numeric(proxies[p, ]$port)
+        tryCatch({
+            for (url in urls) {
+                message(sprintf("using proxy %s to access %s...", ip, url))
+                page <- proxy_GET(url, ip, port, ...) # try getting resource
+                message(sprintf("successfully retrieved %s", url))
+                match.fun(callback)(page) # run the callback
+                message("callback success")
+                urls <- urls[!urls %in% url] # dont get the same url twice
+            }
+        }, error = function(cond) {
+            message(sprintf("request failed with message %s: ", cond))
+        })
+    }
+}
+
+if (!interactive()) {
+    proxies <- get_spys_proxies()
+    filename <- sprintf("proxies/good_proxies_%s.csv", Sys.Date())
+    good <- find_good_proxies(proxies)
+    write.csv(good[2:5], filename)
+}
