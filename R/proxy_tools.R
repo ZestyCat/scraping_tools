@@ -58,21 +58,25 @@ find_good_proxies <- function(proxies, test = "https://httpbin.org/get",
     return(proxies[good_proxies, ])
 }
 
-rotate_proxies <- function(proxies, url, callback, ...) {
+rotate_proxies <- function(proxies, url, ...) {
     while (TRUE) {
         p <- sample(seq_len(nrow(proxies)), 1)
         ip <- proxies[p, ]$ip
         port <- as.numeric(proxies[p, ]$port)
         tryCatch({
             message(sprintf("using proxy %s to access %s...", ip, url))
-            page <- proxy_GET(url, ip, port, ...) # try getting resource
+            response <- proxy_GET(url, ip, port, ...) # try getting resource
+            if (response["status_code"] > 400) {
+                stop(sprintf("received %s \n", response["status_code"]))
+            }
             message(sprintf("successfully retrieved %s", url))
-            match.fun(callback)(page) # run the callback
-            message("callback success")
+            print(response["status_code"])
+            break
         }, error = function(cond) {
             message(sprintf("request failed with message %s: ", cond))
         })
     }
+    return(response)
 }
 
 if (!interactive()) {

@@ -5,13 +5,13 @@ from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
-import pandas as pd
 import csv
+import random
 import requests
 
 def get_proxies(fmt = None, n = None, https = True, 
         method = "selenium", savename = "./proxies/free-proxy-list"):
-
+    """ Get a list of proxies either using requests or selenium """
     url = "https://free-proxy-list.net/"
     if method == "selenium":
         options = Options()
@@ -63,8 +63,21 @@ def get_proxies(fmt = None, n = None, https = True,
     else:
         print("Expected fmt=csv or fmt=txt, or fmt=None.")
 
-
     return table_data
+
+def rotate_proxies(proxy_list, url, **kwargs):
+    while True:
+        try:
+            p = random.randint(0, len(proxy_list) - 1)
+            proxies = {"http": proxy_list[p], "https" : proxy_list[p]}
+            response = requests.get(url, proxies=proxies, **kwargs)
+            if response.status_code > 400:
+                raise Exception(f"server returned error {response.status_code}")
+            print(f"using proxy {proxy_list[p]} to access {url}")
+            break
+        except:
+            print("error, looking for another proxy...")
+    return response
 
 if __name__ == "__main__":
     get_proxies(method="requests", n=25, fmt="txt")
