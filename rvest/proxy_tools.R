@@ -1,8 +1,16 @@
 library(httr)
 library(rvest)
 
-get_freeproxylist_proxies <- function() {
-    url <- "https://www.freeproxylists.net/"
+get_free_proxy_list <- function(n = 25, https = TRUE) {
+    url <- "https://www.free-proxy-list.net/"
+    html <- read_html(url)
+    table <- html_table(html)[[1]]
+    names(table) <- c("ip", "port", "code", "country", "anonymity",
+                      "google", "https", "last checked")
+    if (https) {
+        table <- table[table$https == "yes", ]
+    }
+    return(table[1:n, ])
 }
 
 get_spys_proxies <- function(url = "https://spys.me/proxy.txt") {
@@ -24,12 +32,22 @@ proxy_GET <- function(url, proxy_ip, proxy_port, timeout = 3, ...) {
 }
 
 
-find_good_proxies <- function(proxies, test = "https://httpbin.org/get", ...) {
+find_good_proxies <- function(proxies, test = "https://httpbin.org/get",
+                              https = TRUE, ...) {
+    if (https == TRUE) {
+        tryCatch({
+            proxies <- proxies[proxies["https"] == "yes", ]
+        }, error = function(cond) {
+            stop("proxy dataframe must have 'https' column")
+        })
+    }
     good_proxies <- c()
     for (p in seq_len(nrow(proxies))) {
         ip <- proxies[p, ]$ip
         port <- as.numeric(proxies[p, ]$port)
         tryCatch({
+            message(sprintf("trying proxy %s https: %s",
+                            ip, proxies[p, ]$https))
             proxy_GET(test, ip, port, ...)
             message("proxy passed timeout test")
             good_proxies <- append(good_proxies, p)
@@ -40,19 +58,17 @@ find_good_proxies <- function(proxies, test = "https://httpbin.org/get", ...) {
     return(proxies[good_proxies, ])
 }
 
-rotate_proxies <- function(proxies, urls, callback, ...) {
-    for (p in seq_len(nrow(proxies))) { # loop through proxies
+rotate_proxies <- function(proxies, url, callback, ...) {
+    while (TRUE) {
+        p <- sample(seq_len(nrow(proxies)), 1)
         ip <- proxies[p, ]$ip
         port <- as.numeric(proxies[p, ]$port)
         tryCatch({
-            for (url in urls) {
-                message(sprintf("using proxy %s to access %s...", ip, url))
-                page <- proxy_GET(url, ip, port, ...) # try getting resource
-                message(sprintf("successfully retrieved %s", url))
-                match.fun(callback)(page) # run the callback
-                message("callback success")
-                urls <- urls[!urls %in% url] # dont get the same url twice
-            }
+            message(sprintf("using proxy %s to access %s...", ip, url))
+            page <- proxy_GET(url, ip, port, ...) # try getting resource
+            message(sprintf("successfully retrieved %s", url))
+            match.fun(callback)(page) # run the callback
+            message("callback success")
         }, error = function(cond) {
             message(sprintf("request failed with message %s: ", cond))
         })
