@@ -9,8 +9,10 @@ import csv
 import random
 import requests
 
-def get_proxies(fmt = None, n = None, https = True, 
-        method = "selenium", savename = "./proxies/free-proxy-list"):
+import proxy_tools as pt
+
+def get_proxies(fmt = None, n_proxies = None, return_fmt = "list", https = True, 
+        method = "requests", countries = None, savename = "./proxies/free-proxy-list"):
     """ Get a list of proxies either using requests or selenium """
     url = "https://free-proxy-list.net/"
     if method == "selenium":
@@ -29,7 +31,7 @@ def get_proxies(fmt = None, n = None, https = True,
     else:
         print("Expected method = selenium or method = requests.")
 
-    soup = BeautifulSoup(html)
+    soup = BeautifulSoup(html, features="lxml")
     table = soup.find_all("table")[0]
     rows = table.find_all("tr")
 
@@ -41,8 +43,12 @@ def get_proxies(fmt = None, n = None, https = True,
         if len(data) != 0:
             table_data.append(data)
 
-    if n:
-        table_data = table_data[1:n+1]
+    if countries:
+        table_data = [t for t in table_data[1:] \
+                if t[2] in countries or t[3] in countries]
+
+    if n_proxies:
+        table_data = table_data[1:n_proxies+1]
     else:
         table_data = table_data[1:]
 
@@ -63,7 +69,13 @@ def get_proxies(fmt = None, n = None, https = True,
     else:
         print("Expected fmt=csv or fmt=txt, or fmt=None.")
 
-    return table_data
+    if return_fmt == "list":
+        return [f"{row[0]}:{str(row[1])}" for row in table_data]
+    elif return_fmt == "dataframe":
+        return table_data
+    else:
+        print("unrecognized return format. choose list or dataframe.")
+    return []
 
 def rotate_proxies(proxy_list, url, **kwargs):
     while True:
@@ -79,6 +91,38 @@ def rotate_proxies(proxy_list, url, **kwargs):
             print("error, looking for another proxy...")
     return response
 
-if __name__ == "__main__":
-    get_proxies(method="requests", n=25, fmt="txt")
-    get_proxies(method="requests", n=25, fmt="csv")
+
+class StealthDriver():
+    """ Undetected chromdriver, random user agent, rotating proxies """
+    def __init__(self, **kwargs):
+        print("getting proxies...")
+        self.proxies = pt.get_proxies(**kwargs)
+    
+    def init_driver(self, proxy=None):
+        if hasattr(self, "driver"):
+            self.driver.quit()
+        ua = UserAgent()
+        userAgent = ua.random
+        options = uc.ChromeOptions()
+        options.add_argument(f"user-agent={userAgent}")
+        if proxy:
+            options.add_argument(f"--proxy-server={proxy}")
+        options.add_argument("--disable-javascript")
+        self.driver = uc.Chrome(options=options, use_subprocess=True)
+
+    def proxy_get(self, url, callback=None, **kwargs):
+        for proxy in self.proxies:
+            try:
+                self.init_driver(proxy)
+                self.driver.get(url)
+                print(f"using proxy {proxy}.")
+                if callback:
+                    try:
+                        callback(self.driver, **kwargs)
+                        break
+                    except:
+                        raise Exception
+                break
+            except:
+                print("rotating to another proxy...")
+                self.driver.quit()

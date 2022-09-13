@@ -4,6 +4,12 @@ Stealth:
     3. scrapy-rotating-proxies - rotate through proxies and detect ban
     4. scrapingbee - paid scraping api to try in the future
     5. fake_useragent - randomizes user agent header
+    6. ghost - python webkit client
+
+Resources:
+    1. free-proxy-lists.com
+    2. free-proxy.cz
+    3. scrapingbee.com
 
 FOSS Tools:
     1. rvest - R scraping and html parsing library
@@ -12,10 +18,14 @@ FOSS Tools:
     4. selenium - web automation
     5. BeautifulSoup - python html parsing library
 
+Paid tools:
+    1. scrapingbee
+
 My Tools:
-    1. rvest/proxy_tools.R - get proxy list, test proxies, proxy GET, rotate
-    2. rvest/rvest_login_session.R - sign in to website and scrape
-    3. rvest/scrape_blog_pages.R - simple scraper to go through blog pages
-    4. selenium/get_freeproxylist.py - gets csv/txt from free-proxy-list.com
-    5. selenium/stealthy.py - options for stealthy web driving
-    6. selenium/selenium_login.py - template for logging in on webdriver
+    1. proxy_tools.R - get proxy list, test proxies, proxy GET, rotate
+    2. rvest_login_session.R - sign in to website and scrape
+    3. scrape_blog_pages.R - simple scraper to go through blog pages
+    4. proxy_toolspy - python proxy tools
+    5. stealthy.py - options for stealthy web driving
+    6. selenium_login.py - template for logging in on webdriver
+    7. selenium_functions,py - common functions for selenium

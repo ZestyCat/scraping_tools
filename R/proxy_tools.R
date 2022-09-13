@@ -31,7 +31,7 @@ proxy_GET <- function(url, proxy_ip, proxy_port, timeout = 3, ...) {
     return(page)
 }
 
-rotate_proxies <- function(proxies, url, ...) {
+rotate_GET <- function(proxies, url, ...) {
     while (TRUE) {
         p <- sample(seq_len(nrow(proxies)), 1)
         ip <- proxies[p, ]$ip
