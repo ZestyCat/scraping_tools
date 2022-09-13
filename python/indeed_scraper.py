@@ -16,18 +16,14 @@ location = "San Diego, CA"
 sd = pt.StealthDriver(countries="US")
 
 # get indeed. Callback used to check whether page loads correctly
-def check_loaded(driver):
-    WebDriverWait(driver, 10).until( \
-            EC.presence_of_element_located((By.ID, "indeed-globalnav-logo")))
-    print("page loaded.")
+sd.proxy_get("https://www.indeed.com/", \
+        callback = sf.check_loaded, by=By.ID, element="indeed-globalnav-logo")
 
-sd.proxy_get("https://www.indeed.com/", callback = check_loaded)
+sf.fill_form(sd.driver, job_search, "text-input-what", by=By.ID)
+sf.fill_form(sd.driver, location, "text-input-where", by=By.ID)
+sf.click_item(sd.driver, \
+                "yosegi-InlineWhatWhere-primaryButton", by=By.CLASS_NAME)
 
-#sf.fill_form(sd.driver, job_search, "text-input-what", by=By.ID)
-#sf.fill_form(sd.driver, location, "text-input-where", by=By.ID)
-#sf.click_item(sd.driver, \
-        #        "yosegi-InlineWhatWhere-primaryButton", by=By.CLASS_NAME)
+time.sleep(5)
 
-#time.sleep(5)
-
-#sd.driver.quit()
+sd.driver.quit()

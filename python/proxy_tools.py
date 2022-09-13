@@ -104,7 +104,7 @@ class StealthDriver():
         ua = UserAgent()
         userAgent = ua.random
         options = uc.ChromeOptions()
-        options.add_argument(f"user-agent={userAgent}")
+        options.add_argument(f"--user-agent={userAgent}")
         if proxy:
             options.add_argument(f"--proxy-server={proxy}")
         options.add_argument("--disable-javascript")

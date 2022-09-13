@@ -20,3 +20,7 @@ def get_element_text(driver, element, by = By.ID):
         EC.presence_of_element_located((by, element)))
     ele = driver.find_element(By.CSS_SELECTOR, element)
     return ele.text
+
+def check_loaded(driver, by=By.ID, element=""):
+    WebDriverWait(driver, 10).until( \
+            EC.presence_of_element_located((by, element)))
