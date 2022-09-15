@@ -1,6 +1,5 @@
 library(httr)
 library(rvest)
-
 source("R/proxy_tools.R")
 
 proxies <- get_free_proxy_list(n = 25)
@@ -39,5 +38,5 @@ for (state in states) {
 }
 
 leads <- leads[!is.na(leads$addr), ]
-
+leads <- leads[!grepl("Holiday Inn", leads$name)]
 write.csv(leads, "./data/lodging_leads.csv")
