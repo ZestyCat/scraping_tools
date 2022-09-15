@@ -1,7 +1,7 @@
 library(httr)
 library(rvest)
 
-get_free_proxy_list <- function(n = 25, https = TRUE) {
+get_free_proxy_list <- function(n = 25, country = "US", https = TRUE) {
     url <- "https://www.free-proxy-list.net/"
     html <- read_html(url)
     table <- html_table(html)[[1]]
@@ -9,6 +9,9 @@ get_free_proxy_list <- function(n = 25, https = TRUE) {
                       "google", "https", "last checked")
     if (https) {
         table <- table[table$https == "yes", ]
+    }
+    if (!is.null(country)) {
+        table <- table[table$code == country, ]
     }
     return(table[1:n, ])
 }
